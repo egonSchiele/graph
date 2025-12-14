@@ -1,1 +1,2 @@
-export { Graph } from "./graph";
+export * from "./graph.js";
+export * from "./types.js";

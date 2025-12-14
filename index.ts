@@ -1,80 +1,32 @@
-import {
-  between,
-  capture,
-  many1,
-  manyTillStr,
-  or,
-  seqC
-} from "./lib/combinators.js";
-import { regexParser, set, str } from "./lib/parsers.js";
-import { Parser } from "./lib/types.js";
+import { Graph } from "./lib/graph.js";
 
-export type MustacheTag = VariableTag | SectionTag | InvertedTag | CommentTag | PartialTag;
+type State = {
+  count: number;
+  log: string[];
+};
 
-export type VariableTag = {
-  type: 'variable';
-  name: string;
-}
+const graph = new Graph<State>();
 
-export type SectionTag = {
-  type: 'section';
-  name: string;
-  content: string;
-}
+graph.node("start", (data) => {
+  return {
+    ...data,
+    log: [...data.log, "Starting computation"],
+  };
+});
 
-export type InvertedTag = {
-  type: 'inverted';
-  name: string;
-  content: string;
-}
+graph.node("increment", (data) => {
+  return {
+    ...data,
+    count: data.count + 1,
+    log: [...data.log, `Incremented count to ${data.count + 1}`],
+  };
+});
 
-export type CommentTag = {
-  type: 'comment';
-  content: string;
-}
+graph.edge("start", "increment");
 
-export type PartialTag = {
-  type: 'partial';
-  name: string;
-}
+const initialState: State = { count: 0, log: [] };
+const finalState = graph.run("start", initialState);
 
-const variableTag: Parser<VariableTag> = seqC(
-  set("type", "variable"),
-  capture(between(str("{{"), str("}}"), regexParser("([a-zA-Z0-9_]+)")), "name"),
-)
+console.log(finalState);
 
-const sectionTag: Parser<SectionTag> = seqC(
-  set("type", "section"),
-  capture(between(str("{{#"), str("}}"), regexParser("([a-zA-Z0-9_]+)")), "name"),
-  capture(manyTillStr("{{/"), "content"),
-)
-
-const invertedTag: Parser<InvertedTag> = seqC(
-  set("type", "inverted"),
-  capture(between(str("{{^"), str("}}"), regexParser("([a-zA-Z0-9_]+)")), "name"),
-  capture(manyTillStr("{{/"), "content"),
-)
-
-const commentTag: Parser<CommentTag> = seqC(
-  set("type", "comment"),
-  capture(between(str("{{!"), str("}}"), regexParser("(.+)")), "content"),
-)
-
-const partialTag: Parser<PartialTag> = seqC(
-  set("type", "partial"),
-  capture(between(str("{{>"), str("}}"), regexParser("([a-zA-Z0-9_]+)")), "name"),
-)
-
-export type Mustache = MustacheTag | SimpleText;
-
-export type SimpleText = {
-  type: 'text';
-  content: string;
-}
-
-const text: Parser<SimpleText> = seqC(
-  set("type", "text"),
-  capture(manyTillStr("{{"), "content"),
-)
-
-export const mustacheParser: Parser<Mustache[]> = many1(or(variableTag, sectionTag, invertedTag, commentTag, partialTag, text));
+graph.prettyPrint();

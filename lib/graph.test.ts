@@ -133,7 +133,7 @@ describe("Graph", () => {
 
     it("formats conditional edge as 'conditional'", () => {
       const graph = new Graph<State>();
-      const edge = conditionalEdge<State>((data) => "someNode");
+      const edge = conditionalEdge<State>(async (data) => "someNode");
 
       expect(graph.prettyPrintEdge(edge)).toBe("conditional");
     });

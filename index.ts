@@ -22,7 +22,16 @@ graph.node("increment", (data) => {
   };
 });
 
+graph.node("finish", (data) => data);
+
 graph.edge("start", "increment");
+graph.edge("increment", (data) => {
+  if (data.count < 5) {
+    return "increment";
+  } else {
+    return "finish";
+  }
+});
 
 const initialState: State = { count: 0, log: [] };
 const finalState = graph.run("start", initialState);

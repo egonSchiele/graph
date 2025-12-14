@@ -9,98 +9,98 @@ type State = {
 
 describe("Graph", () => {
   describe("node()", () => {
-    it("registers a node that can be executed", () => {
+    it("registers a node that can be executed", async () => {
       const graph = new Graph<State>();
-      graph.node("start", (data) => ({
+      graph.node("start", async (data) => ({
         ...data,
         count: data.count + 1,
       }));
 
-      const result = graph.run("start", { count: 0, log: [] });
+      const result = await graph.run("start", { count: 0, log: [] });
       expect(result.count).toBe(1);
     });
   });
 
   describe("edge()", () => {
-    it("creates a regular edge with string destination", () => {
+    it("creates a regular edge with string destination", async () => {
       const graph = new Graph<State>();
-      graph.node("a", (data) => ({ ...data, log: [...data.log, "a"] }));
-      graph.node("b", (data) => ({ ...data, log: [...data.log, "b"] }));
+      graph.node("a", async (data) => ({ ...data, log: [...data.log, "a"] }));
+      graph.node("b", async (data) => ({ ...data, log: [...data.log, "b"] }));
       graph.edge("a", "b");
 
-      const result = graph.run("a", { count: 0, log: [] });
+      const result = await graph.run("a", { count: 0, log: [] });
       expect(result.log).toEqual(["a", "b"]);
     });
 
-    it("creates a conditional edge with function destination", () => {
+    it("creates a conditional edge with function destination", async () => {
       const graph = new Graph<State>();
-      graph.node("start", (data) => data);
-      graph.node("high", (data) => ({ ...data, log: ["high"] }));
-      graph.node("low", (data) => ({ ...data, log: ["low"] }));
+      graph.node("start", async (data) => data);
+      graph.node("high", async (data) => ({ ...data, log: ["high"] }));
+      graph.node("low", async (data) => ({ ...data, log: ["low"] }));
 
-      graph.edge("start", (data) => (data.count >= 5 ? "high" : "low"));
+      graph.edge("start", async (data) => (data.count >= 5 ? "high" : "low"));
 
-      const highResult = graph.run("start", { count: 10, log: [] });
+      const highResult = await graph.run("start", { count: 10, log: [] });
       expect(highResult.log).toEqual(["high"]);
 
-      const lowResult = graph.run("start", { count: 2, log: [] });
+      const lowResult = await graph.run("start", { count: 2, log: [] });
       expect(lowResult.log).toEqual(["low"]);
     });
 
-    it("handles edges for nodes defined later", () => {
+    it("handles edges for nodes defined later", async () => {
       const graph = new Graph<State>();
       graph.edge("a", "b");
-      graph.node("a", (data) => ({ ...data, log: [...data.log, "a"] }));
-      graph.node("b", (data) => ({ ...data, log: [...data.log, "b"] }));
+      graph.node("a", async (data) => ({ ...data, log: [...data.log, "a"] }));
+      graph.node("b", async (data) => ({ ...data, log: [...data.log, "b"] }));
 
-      const result = graph.run("a", { count: 0, log: [] });
+      const result = await graph.run("a", { count: 0, log: [] });
       expect(result.log).toEqual(["a", "b"]);
     });
   });
 
   describe("run()", () => {
-    it("executes a single node and returns transformed data", () => {
+    it("executes a single node and returns transformed data", async () => {
       const graph = new Graph<State>();
-      graph.node("only", (data) => ({
+      graph.node("only", async (data) => ({
         count: data.count * 2,
         log: ["doubled"],
       }));
 
-      const result = graph.run("only", { count: 5, log: [] });
+      const result = await graph.run("only", { count: 5, log: [] });
       expect(result).toEqual({ count: 10, log: ["doubled"] });
     });
 
-    it("follows a chain of regular edges", () => {
+    it("follows a chain of regular edges", async () => {
       const graph = new Graph<State>();
-      graph.node("a", (data) => ({ ...data, count: data.count + 1 }));
-      graph.node("b", (data) => ({ ...data, count: data.count + 2 }));
-      graph.node("c", (data) => ({ ...data, count: data.count + 3 }));
+      graph.node("a", async (data) => ({ ...data, count: data.count + 1 }));
+      graph.node("b", async (data) => ({ ...data, count: data.count + 2 }));
+      graph.node("c", async (data) => ({ ...data, count: data.count + 3 }));
 
       graph.edge("a", "b");
       graph.edge("b", "c");
 
-      const result = graph.run("a", { count: 0, log: [] });
+      const result = await graph.run("a", { count: 0, log: [] });
       expect(result.count).toBe(6);
     });
 
-    it("handles loop with conditional exit (index.ts pattern)", () => {
+    it("handles loop with conditional exit (index.ts pattern)", async () => {
       const graph = new Graph<State>();
 
-      graph.node("start", (data) => ({
+      graph.node("start", async (data) => ({
         ...data,
         log: [...data.log, "start"],
       }));
 
-      graph.node("increment", (data) => ({
+      graph.node("increment", async (data) => ({
         ...data,
         count: data.count + 1,
         log: [...data.log, `inc:${data.count + 1}`],
       }));
 
-      graph.node("finish", (data) => data);
+      graph.node("finish", async (data) => data);
 
       graph.edge("start", "increment");
-      graph.edge("increment", (data) => {
+      graph.edge("increment", async (data) => {
         if (data.count < 3) {
           return "increment";
         } else {
@@ -108,17 +108,17 @@ describe("Graph", () => {
         }
       });
 
-      const result = graph.run("start", { count: 0, log: [] });
+      const result = await graph.run("start", { count: 0, log: [] });
       expect(result.count).toBe(3);
       expect(result.log).toEqual(["start", "inc:1", "inc:2", "inc:3"]);
     });
 
-    it("handles node without registered function", () => {
+    it("handles node without registered function", async () => {
       const graph = new Graph<State>();
-      graph.node("a", (data) => ({ ...data, log: ["a"] }));
+      graph.node("a", async (data) => ({ ...data, log: ["a"] }));
       graph.edge("a", "unregistered");
 
-      const result = graph.run("a", { count: 0, log: [] });
+      const result = await graph.run("a", { count: 0, log: [] });
       expect(result.log).toEqual(["a"]);
     });
   });
@@ -142,12 +142,12 @@ describe("Graph", () => {
   describe("prettyPrint()", () => {
     it("logs all edges to console", () => {
       const graph = new Graph<State>();
-      graph.node("a", (data) => data);
-      graph.node("b", (data) => data);
-      graph.node("c", (data) => data);
+      graph.node("a", async (data) => data);
+      graph.node("b", async (data) => data);
+      graph.node("c", async (data) => data);
 
       graph.edge("a", "b");
-      graph.edge("b", (data) => "c");
+      graph.edge("b", async (data) => "c");
 
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 

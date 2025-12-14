@@ -8,10 +8,10 @@ import {
 } from "./types.js";
 
 export class Graph<T> {
-  private nodes: Record<NodeId, (data: T) => T> = {};
+  private nodes: Record<NodeId, (data: T) => Promise<T>> = {};
   private edges: Record<NodeId, Edge<T>[]> = {};
 
-  node(id: NodeId, func: (data: T) => T): void {
+  node(id: NodeId, func: (data: T) => Promise<T>): void {
     this.nodes[id] = func;
     if (!this.edges[id]) {
       this.edges[id] = [];
@@ -29,7 +29,7 @@ export class Graph<T> {
     }
   }
 
-  run(startId: NodeId, input: T): T {
+  async run(startId: NodeId, input: T): Promise<T> {
     const stack: NodeId[] = [startId];
     let data: T = input;
     while (stack.length > 0) {
@@ -37,7 +37,7 @@ export class Graph<T> {
       const nodeFunc = this.nodes[currentId];
 
       if (nodeFunc) {
-        data = nodeFunc(data);
+        data = await nodeFunc(data);
       }
 
       const edges = this.edges[currentId] || [];
@@ -45,7 +45,7 @@ export class Graph<T> {
         if (isRegularEdge(edge)) {
           stack.push(edge.to);
         } else {
-          const nextId = edge.condition(data);
+          const nextId = await edge.condition(data);
           stack.push(nextId);
         }
       }

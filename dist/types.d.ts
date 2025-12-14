@@ -4,7 +4,7 @@ export type RegularEdge = {
     type: "regular";
     to: NodeId;
 };
-export type ConditionalFunc<T> = (data: T) => NodeId;
+export type ConditionalFunc<T> = (data: T) => Promise<NodeId>;
 export type ConditionalEdge<T> = {
     type: "conditional";
     condition: ConditionalFunc<T>;

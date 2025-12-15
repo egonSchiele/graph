@@ -3,17 +3,18 @@ export type GraphConfig = {
     logData?: boolean;
 };
 export type NodeId = string;
-export type Edge<T> = RegularEdge | ConditionalEdge<T>;
-export type RegularEdge = {
+export type Edge<T, N extends string> = RegularEdge<N> | ConditionalEdge<T, N>;
+export type RegularEdge<N extends string> = {
     type: "regular";
-    to: NodeId;
+    to: N;
 };
-export type ConditionalFunc<T> = (data: T) => Promise<NodeId>;
-export type ConditionalEdge<T> = {
+export type ConditionalFunc<T, N extends string> = (data: T) => Promise<N>;
+export type ConditionalEdge<T, N extends string> = {
     type: "conditional";
-    condition: ConditionalFunc<T>;
+    condition: ConditionalFunc<T, N>;
+    adjacentNodes: N[];
 };
-export declare function regularEdge(to: NodeId): RegularEdge;
-export declare function conditionalEdge<T>(condition: ConditionalFunc<T>): ConditionalEdge<T>;
-export declare function isRegularEdge<T>(edge: Edge<T>): edge is RegularEdge;
-export declare function isConditionalEdge<T>(edge: Edge<T>): edge is ConditionalEdge<T>;
+export declare function regularEdge<N extends string>(to: N): RegularEdge<N>;
+export declare function conditionalEdge<T, N extends string>(condition: ConditionalFunc<T, N>, adjacentNodes: N[]): ConditionalEdge<T, N>;
+export declare function isRegularEdge<T, N extends string>(edge: Edge<T, N>): edge is RegularEdge<N>;
+export declare function isConditionalEdge<T, N extends string>(edge: Edge<T, N>): edge is ConditionalEdge<T, N>;

@@ -5,16 +5,18 @@ type State = {
   log: string[];
 };
 
-const graph = new Graph<State>();
+const nodes = ["start", "increment", "finish"] as const;
+type Node = typeof nodes[number];
+const graph = new Graph<State, Node>(nodes);
 
-graph.node("start", (data) => {
+graph.node("start", async (data) => {
   return {
     ...data,
     log: [...data.log, "Starting computation"],
   };
 });
 
-graph.node("increment", (data) => {
+graph.node("increment", async (data) => {
   return {
     ...data,
     count: data.count + 1,
@@ -22,10 +24,10 @@ graph.node("increment", (data) => {
   };
 });
 
-graph.node("finish", (data) => data);
+graph.node("finish", async (data) => data);
 
 graph.edge("start", "increment");
-graph.edge("increment", (data) => {
+graph.conditionalEdge("increment", ["finish", "increment"], async (data) => {
   if (data.count < 5) {
     return "increment";
   } else {
@@ -33,9 +35,11 @@ graph.edge("increment", (data) => {
   }
 });
 
-const initialState: State = { count: 0, log: [] };
-const finalState = graph.run("start", initialState);
-
-console.log(finalState);
+async function main() {
+  const initialState: State = { count: 0, log: [] };
+  const finalState = await graph.run("start", initialState);
+  console.log(finalState);
+}
 
 graph.prettyPrint();
+main();

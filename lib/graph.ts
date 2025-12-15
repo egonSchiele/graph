@@ -8,31 +8,34 @@ import {
   regularEdge,
 } from "./types.js";
 
-export class Graph<T> {
-  private nodes: Record<NodeId, (data: T) => Promise<T>> = {};
-  private edges: Record<NodeId, Edge<T>[]> = {};
+export class Graph<T, N extends string> {
+  private nodes: Partial<Record<N, (data: T) => Promise<T>>> = {};
+  private edges: Partial<Record<N, Edge<T, N>[]>> = {};
   private config: GraphConfig;
 
-  constructor(config: GraphConfig = {}) {
+  constructor(nodes: readonly N[], config: GraphConfig = {}) {
     this.config = config;
   }
 
-  node(id: NodeId, func: (data: T) => Promise<T>): void {
+  node(id: N, func: (data: T) => Promise<T>): void {
     this.nodes[id] = func;
     if (!this.edges[id]) {
       this.edges[id] = [];
     }
   }
 
-  edge(from: NodeId, to: NodeId | ConditionalFunc<T>): void {
+  edge(from: N, to: N): void {
     if (!this.edges[from]) {
       this.edges[from] = [];
     }
-    if (typeof to === "function") {
-      this.edges[from].push(conditionalEdge(to));
-    } else {
-      this.edges[from].push(regularEdge(to));
+    this.edges[from].push(regularEdge(to));
+  }
+
+  conditionalEdge(from: N, adjacentNodes: N[], to: ConditionalFunc<T, N>): void {
+    if (!this.edges[from]) {
+      this.edges[from] = [];
     }
+    this.edges[from].push(conditionalEdge(to, adjacentNodes));
   }
 
   debug(str: string, data?: T): void {
@@ -45,8 +48,8 @@ export class Graph<T> {
     }
   }
 
-  async run(startId: NodeId, input: T): Promise<T> {
-    const stack: NodeId[] = [startId];
+  async run(startId: N, input: T): Promise<T> {
+    const stack: N[] = [startId];
     let data: T = input;
     while (stack.length > 0) {
       const currentId = stack.pop()!;
@@ -75,17 +78,17 @@ export class Graph<T> {
 
   prettyPrint(): void {
     for (const from in this.edges) {
-      for (const to of this.edges[from]) {
+      for (const to of this.edges[from as keyof typeof this.edges]!) {
         console.log(`${from} -> ${this.prettyPrintEdge(to)}`);
       }
     }
   }
 
-  prettyPrintEdge(edge: Edge<T>): string {
+  prettyPrintEdge(edge: Edge<T, N>): string {
     if (isRegularEdge(edge)) {
       return edge.to;
     } else {
-      return "conditional";
+      return edge.adjacentNodes.join(" | ");
     }
   }
 }

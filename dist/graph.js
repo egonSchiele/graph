@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { conditionalEdge, isRegularEdge, regularEdge, } from "./types.js";
 export class Graph {
-    constructor(config = {}) {
+    constructor(nodes, config = {}) {
         this.nodes = {};
         this.edges = {};
         this.config = config;
@@ -24,12 +24,13 @@ export class Graph {
         if (!this.edges[from]) {
             this.edges[from] = [];
         }
-        if (typeof to === "function") {
-            this.edges[from].push(conditionalEdge(to));
+        this.edges[from].push(regularEdge(to));
+    }
+    conditionalEdge(from, adjacentNodes, to) {
+        if (!this.edges[from]) {
+            this.edges[from] = [];
         }
-        else {
-            this.edges[from].push(regularEdge(to));
-        }
+        this.edges[from].push(conditionalEdge(to, adjacentNodes));
     }
     debug(str, data) {
         let debugStr = `[DEBUG]: ${str}`;
@@ -80,7 +81,7 @@ export class Graph {
             return edge.to;
         }
         else {
-            return "conditional";
+            return edge.adjacentNodes.join(" | ");
         }
     }
 }

@@ -9,9 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { conditionalEdge, isRegularEdge, regularEdge, } from "./types.js";
 export class Graph {
-    constructor() {
+    constructor(config = {}) {
         this.nodes = {};
         this.edges = {};
+        this.config = config;
     }
     node(id, func) {
         this.nodes[id] = func;
@@ -30,6 +31,15 @@ export class Graph {
             this.edges[from].push(regularEdge(to));
         }
     }
+    debug(str, data) {
+        let debugStr = `[DEBUG]: ${str}`;
+        if (this.config.logData && data !== undefined) {
+            debugStr += ` | Data: ${JSON.stringify(data)}`;
+        }
+        if (this.config.debug) {
+            console.log(debugStr);
+        }
+    }
     run(startId, input) {
         return __awaiter(this, void 0, void 0, function* () {
             const stack = [startId];
@@ -38,15 +48,19 @@ export class Graph {
                 const currentId = stack.pop();
                 const nodeFunc = this.nodes[currentId];
                 if (nodeFunc) {
+                    this.debug(`Executing node: ${currentId}`, data);
                     data = yield nodeFunc(data);
+                    this.debug(`Completed node: ${currentId}`, data);
                 }
                 const edges = this.edges[currentId] || [];
                 for (const edge of edges) {
                     if (isRegularEdge(edge)) {
                         stack.push(edge.to);
+                        this.debug(`Following regular edge to: ${edge.to}`);
                     }
                     else {
                         const nextId = yield edge.condition(data);
+                        this.debug(`Following conditional edge to: ${nextId}`, data);
                         stack.push(nextId);
                     }
                 }

@@ -1,3 +1,8 @@
+export type GraphConfig = {
+  debug?: boolean;
+  logData?: boolean;
+}
+
 export type NodeId = string;
 export type Edge<T> = RegularEdge | ConditionalEdge<T>;
 
@@ -31,3 +36,4 @@ export function isConditionalEdge<T>(
 ): edge is ConditionalEdge<T> {
   return edge.type === "conditional";
 }
+

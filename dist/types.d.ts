@@ -1,3 +1,7 @@
+export type GraphConfig = {
+    debug?: boolean;
+    logData?: boolean;
+};
 export type NodeId = string;
 export type Edge<T> = RegularEdge | ConditionalEdge<T>;
 export type RegularEdge = {

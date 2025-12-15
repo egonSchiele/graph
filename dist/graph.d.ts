@@ -11,4 +11,5 @@ export declare class Graph<T, N extends string> {
     run(startId: N, input: T): Promise<T>;
     prettyPrint(): void;
     prettyPrintEdge(edge: Edge<T, N>): string;
+    toMermaid(): string;
 }

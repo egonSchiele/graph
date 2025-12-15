@@ -84,4 +84,20 @@ export class Graph {
             return edge.adjacentNodes.join(" | ");
         }
     }
+    toMermaid() {
+        let mermaid = "graph TD\n";
+        for (const from in this.edges) {
+            for (const to of this.edges[from]) {
+                if (isRegularEdge(to)) {
+                    mermaid += `  ${from} --> ${to.to}\n`;
+                }
+                else {
+                    to.adjacentNodes.forEach((adjNode) => {
+                        mermaid += `  ${from} --> ${adjNode}\n`;
+                    });
+                }
+            }
+        }
+        return mermaid;
+    }
 }

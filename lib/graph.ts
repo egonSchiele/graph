@@ -91,4 +91,20 @@ export class Graph<T, N extends string> {
       return edge.adjacentNodes.join(" | ");
     }
   }
+
+  toMermaid(): string {
+    let mermaid = "graph TD\n";
+    for (const from in this.edges) {
+      for (const to of this.edges[from as keyof typeof this.edges]!) {
+        if (isRegularEdge(to)) {
+          mermaid += `  ${from} --> ${to.to}\n`;
+        } else {
+          to.adjacentNodes.forEach((adjNode) => {
+            mermaid += `  ${from} --> ${adjNode}\n`;
+          });
+        }
+      }
+    }
+    return mermaid;
+  }
 }

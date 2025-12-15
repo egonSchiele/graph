@@ -31,7 +31,7 @@ export class Graph<T, N extends string> {
     this.edges[from].push(regularEdge(to));
   }
 
-  conditionalEdge(from: N, adjacentNodes: N[], to: ConditionalFunc<T, N>): void {
+  conditionalEdge<const Adjacent extends N>(from: N, adjacentNodes: readonly Adjacent[], to: ConditionalFunc<T, Adjacent>): void {
     if (!this.edges[from]) {
       this.edges[from] = [];
     }

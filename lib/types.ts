@@ -11,11 +11,11 @@ export type RegularEdge<N extends string> = {
   to: N;
 };
 
-export type ConditionalFunc<T, N extends string> = (data: T) => Promise<N>;
+export type ConditionalFunc<T, N extends string> = (data: T) => Promise<NoInfer<N>>;
 export type ConditionalEdge<T, N extends string> = {
   type: "conditional";
   condition: ConditionalFunc<T, N>;
-  adjacentNodes: N[];
+  adjacentNodes: readonly N[];
 };
 
 export function regularEdge<N extends string>(to: N): RegularEdge<N> {
@@ -23,7 +23,7 @@ export function regularEdge<N extends string>(to: N): RegularEdge<N> {
 }
 
 export function conditionalEdge<T, N extends string>(
-  condition: ConditionalFunc<T, N>, adjacentNodes: N[]
+  condition: ConditionalFunc<T, N>, adjacentNodes: readonly N[]
 ): ConditionalEdge<T, N> {
   return { type: "conditional", condition, adjacentNodes };
 }

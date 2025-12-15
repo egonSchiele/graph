@@ -42,5 +42,5 @@ async function main() {
 }
 
 graph.prettyPrint();
-//main();
+main();
 console.log(graph.toMermaid());

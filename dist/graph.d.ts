@@ -6,7 +6,7 @@ export declare class Graph<T, N extends string> {
     constructor(nodes: readonly N[], config?: GraphConfig);
     node(id: N, func: (data: T) => Promise<T>): void;
     edge(from: N, to: N): void;
-    conditionalEdge(from: N, adjacentNodes: N[], to: ConditionalFunc<T, N>): void;
+    conditionalEdge<const Adjacent extends N>(from: N, adjacentNodes: readonly Adjacent[], to: ConditionalFunc<T, Adjacent>): void;
     debug(str: string, data?: T): void;
     run(startId: N, input: T): Promise<T>;
     prettyPrint(): void;

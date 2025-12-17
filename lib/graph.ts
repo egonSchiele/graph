@@ -1,3 +1,5 @@
+import { color } from 'termcolors';
+
 import { GraphError } from "./error.js";
 import {
   conditionalEdge,
@@ -7,6 +9,7 @@ import {
   isRegularEdge,
   regularEdge,
 } from "./types.js";
+import { runtime } from './utils.js';
 
 export class Graph<T, N extends string> {
   private nodes: Partial<Record<N, (data: T) => Promise<T>>> = {};
@@ -43,9 +46,9 @@ export class Graph<T, N extends string> {
   }
 
   debug(str: string, data?: T): void {
-    let debugStr = `[DEBUG]: ${str}`;
+    let debugStr = `${color.magenta("[DEBUG]")}: ${str}`;
     if (this.config.debug?.logData && data !== undefined) {
-      debugStr += ` | Data: ${JSON.stringify(data)}`;
+      debugStr += ` | Data: ${color.green(JSON.stringify(data))}`;
     }
     if (this.config.debug?.log) {
       console.log(debugStr);
@@ -64,26 +67,27 @@ export class Graph<T, N extends string> {
       }
 
       if (this.config.hooks?.beforeNode) {
-        this.debug(`Before hook for node: ${currentId}`, data);
-        data = await this.config.hooks.beforeNode(currentId, data);
+        this.debug(`Before hook for node: ${color.green(currentId)}`, data);
+        data = await this.config.hooks!.beforeNode!(currentId, data);
       }
-      this.debug(`Executing node: ${currentId}`, data);
+      this.debug(`Executing node: ${color.green(currentId)}`, data);
       data = await this.runAndValidate(nodeFunc, currentId, data);
-      this.debug(`Completed node: ${currentId}`, data);
+      this.debug(`Completed node: ${color.green(currentId)}`, data);
 
       if (this.config.hooks?.afterNode) {
-        this.debug(`After hook for node: ${currentId}`, data);
-        data = await this.config.hooks.afterNode(currentId, data);
+        this.debug(`After hook for node: ${color.green(currentId)}`, data);
+
+        data = await this.config.hooks!.afterNode!(currentId, data);
       }
 
       const edges = this.edges[currentId] || [];
       for (const edge of edges) {
         if (isRegularEdge(edge)) {
           stack.push(edge.to);
-          this.debug(`Following regular edge to: ${edge.to}`);
+          this.debug(`Following regular edge to: ${color.green(edge.to)}`);
         } else {
           const nextId = await edge.condition(data);
-          this.debug(`Following conditional edge to: ${nextId}`, data);
+          this.debug(`Following conditional edge to: ${color.green(nextId)}`, data);
           stack.push(nextId);
         }
       }
@@ -109,8 +113,7 @@ export class Graph<T, N extends string> {
           );
         }
         this.debug(
-          `Validation failed for node ${currentId}, retrying... (${
-            retries + 1
+          `Validation failed for node ${color.green(currentId)}, retrying... (${retries + 1
           }/${maxRetries})`,
           data
         );

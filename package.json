@@ -37,5 +37,8 @@
     "prettier": "3.2.5",
     "typescript": "^5.9.3",
     "vitest": "^1.6.1"
+  },
+  "dependencies": {
+    "termcolors": "github:egonSchiele/termcolors"
   }
 }

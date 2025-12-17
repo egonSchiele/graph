@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { color } from 'termcolors';
 import { GraphError } from "./error.js";
 import { conditionalEdge, isRegularEdge, regularEdge, } from "./types.js";
 export class Graph {
@@ -35,9 +36,9 @@ export class Graph {
     }
     debug(str, data) {
         var _a, _b;
-        let debugStr = `[DEBUG]: ${str}`;
+        let debugStr = `${color.magenta("[DEBUG]")}: ${str}`;
         if (((_a = this.config.debug) === null || _a === void 0 ? void 0 : _a.logData) && data !== undefined) {
-            debugStr += ` | Data: ${JSON.stringify(data)}`;
+            debugStr += ` | Data: ${color.green(JSON.stringify(data))}`;
         }
         if ((_b = this.config.debug) === null || _b === void 0 ? void 0 : _b.log) {
             console.log(debugStr);
@@ -55,25 +56,25 @@ export class Graph {
                     throw new GraphError(`Node function for ${currentId} not found.`);
                 }
                 if ((_a = this.config.hooks) === null || _a === void 0 ? void 0 : _a.beforeNode) {
-                    this.debug(`Before hook for node: ${currentId}`, data);
+                    this.debug(`Before hook for node: ${color.green(currentId)}`, data);
                     data = yield this.config.hooks.beforeNode(currentId, data);
                 }
-                this.debug(`Executing node: ${currentId}`, data);
+                this.debug(`Executing node: ${color.green(currentId)}`, data);
                 data = yield this.runAndValidate(nodeFunc, currentId, data);
-                this.debug(`Completed node: ${currentId}`, data);
+                this.debug(`Completed node: ${color.green(currentId)}`, data);
                 if ((_b = this.config.hooks) === null || _b === void 0 ? void 0 : _b.afterNode) {
-                    this.debug(`After hook for node: ${currentId}`, data);
+                    this.debug(`After hook for node: ${color.green(currentId)}`, data);
                     data = yield this.config.hooks.afterNode(currentId, data);
                 }
                 const edges = this.edges[currentId] || [];
                 for (const edge of edges) {
                     if (isRegularEdge(edge)) {
                         stack.push(edge.to);
-                        this.debug(`Following regular edge to: ${edge.to}`);
+                        this.debug(`Following regular edge to: ${color.green(edge.to)}`);
                     }
                     else {
                         const nextId = yield edge.condition(data);
-                        this.debug(`Following conditional edge to: ${nextId}`, data);
+                        this.debug(`Following conditional edge to: ${color.green(nextId)}`, data);
                         stack.push(nextId);
                     }
                 }
@@ -93,7 +94,7 @@ export class Graph {
                     if (retries >= maxRetries) {
                         throw new GraphError(`Validation failed for node ${currentId} after ${maxRetries} retries.`);
                     }
-                    this.debug(`Validation failed for node ${currentId}, retrying... (${retries + 1}/${maxRetries})`, data);
+                    this.debug(`Validation failed for node ${color.green(currentId)}, retrying... (${retries + 1}/${maxRetries})`, data);
                     data = yield nodeFunc(data);
                     isValid = this.config.validation.func(data);
                     retries++;

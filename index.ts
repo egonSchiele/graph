@@ -10,12 +10,8 @@ const beforeNodeHook = async (nodeId: string, data: State): Promise<State> => {
   return { ...data, log: [...data.log, `Before node ${nodeId}`] };
 };
 
-const afterNodeHook = async (nodeId: string, data: State): Promise<State> => {
-  console.log(`After node ${nodeId}:`, data);
-  return { ...data, log: [...data.log, `After node ${nodeId}`] };
-};
 
-/* const graphConfig = {
+const graphConfig = {
   debug: {
     log: true,
     logData: true,
@@ -26,12 +22,11 @@ const afterNodeHook = async (nodeId: string, data: State): Promise<State> => {
   },
   hooks: {
     beforeNode: beforeNodeHook,
-    afterNode: afterNodeHook,
   },
 };
- */
 
-const graphConfig = {};
+
+//const graphConfig = {};
 const nodes = ["start", "increment", "finish"] as const;
 type Node = (typeof nodes)[number];
 const graph = new Graph<State, Node>(nodes, graphConfig);
@@ -55,7 +50,7 @@ graph.node("finish", async (data) => data);
 
 graph.edge("start", "increment");
 graph.conditionalEdge("increment", ["finish", "increment"], async (data) => {
-  if (data.count < 5) {
+  if (data.count < 2) {
     return "increment";
   } else {
     return "finish";

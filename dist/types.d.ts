@@ -1,6 +1,16 @@
-export type GraphConfig = {
-    debug?: boolean;
-    logData?: boolean;
+export type GraphConfig<T> = {
+    debug?: {
+        log?: boolean;
+        logData?: boolean;
+    };
+    validation?: {
+        func?: (data: T) => boolean;
+        maxRetries?: number;
+    };
+    hooks?: {
+        beforeNode?: (nodeId: string, data: T) => Promise<T>;
+        afterNode?: (nodeId: string, data: T) => Promise<T>;
+    };
 };
 export type NodeId = string;
 export type Edge<T, N extends string> = RegularEdge<N> | ConditionalEdge<T, N>;

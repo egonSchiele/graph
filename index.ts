@@ -5,9 +5,36 @@ type State = {
   log: string[];
 };
 
+const beforeNodeHook = async (nodeId: string, data: State): Promise<State> => {
+  console.log(`Before node ${nodeId}:`, data);
+  return { ...data, log: [...data.log, `Before node ${nodeId}`] };
+};
+
+const afterNodeHook = async (nodeId: string, data: State): Promise<State> => {
+  console.log(`After node ${nodeId}:`, data);
+  return { ...data, log: [...data.log, `After node ${nodeId}`] };
+};
+
+/* const graphConfig = {
+  debug: {
+    log: true,
+    logData: true,
+  },
+  validation: {
+    func: (data: State) => data.count >= -1,
+    maxRetries: 3,
+  },
+  hooks: {
+    beforeNode: beforeNodeHook,
+    afterNode: afterNodeHook,
+  },
+};
+ */
+
+const graphConfig = {};
 const nodes = ["start", "increment", "finish"] as const;
-type Node = typeof nodes[number];
-const graph = new Graph<State, Node>(nodes);
+type Node = (typeof nodes)[number];
+const graph = new Graph<State, Node>(nodes, graphConfig);
 
 graph.node("start", async (data) => {
   return {

@@ -1,19 +1,19 @@
+import { GraphError } from "./error.js";
 import {
   conditionalEdge,
   ConditionalFunc,
   Edge,
   GraphConfig,
   isRegularEdge,
-  NodeId,
   regularEdge,
 } from "./types.js";
 
 export class Graph<T, N extends string> {
   private nodes: Partial<Record<N, (data: T) => Promise<T>>> = {};
   private edges: Partial<Record<N, Edge<T, N>[]>> = {};
-  private config: GraphConfig;
+  private config: GraphConfig<T>;
 
-  constructor(nodes: readonly N[], config: GraphConfig = {}) {
+  constructor(nodes: readonly N[], config: GraphConfig<T> = {}) {
     this.config = config;
   }
 
@@ -31,7 +31,11 @@ export class Graph<T, N extends string> {
     this.edges[from].push(regularEdge(to));
   }
 
-  conditionalEdge<const Adjacent extends N>(from: N, adjacentNodes: readonly Adjacent[], to: ConditionalFunc<T, Adjacent>): void {
+  conditionalEdge<const Adjacent extends N>(
+    from: N,
+    adjacentNodes: readonly Adjacent[],
+    to: ConditionalFunc<T, Adjacent>
+  ): void {
     if (!this.edges[from]) {
       this.edges[from] = [];
     }
@@ -40,10 +44,10 @@ export class Graph<T, N extends string> {
 
   debug(str: string, data?: T): void {
     let debugStr = `[DEBUG]: ${str}`;
-    if (this.config.logData && data !== undefined) {
+    if (this.config.debug?.logData && data !== undefined) {
       debugStr += ` | Data: ${JSON.stringify(data)}`;
     }
-    if (this.config.debug) {
+    if (this.config.debug?.log) {
       console.log(debugStr);
     }
   }
@@ -55,10 +59,21 @@ export class Graph<T, N extends string> {
       const currentId = stack.pop()!;
       const nodeFunc = this.nodes[currentId];
 
-      if (nodeFunc) {
-        this.debug(`Executing node: ${currentId}`, data);
-        data = await nodeFunc(data);
-        this.debug(`Completed node: ${currentId}`, data);
+      if (!nodeFunc) {
+        throw new GraphError(`Node function for ${currentId} not found.`);
+      }
+
+      if (this.config.hooks?.beforeNode) {
+        this.debug(`Before hook for node: ${currentId}`, data);
+        data = await this.config.hooks.beforeNode(currentId, data);
+      }
+      this.debug(`Executing node: ${currentId}`, data);
+      data = await this.runAndValidate(nodeFunc, currentId, data);
+      this.debug(`Completed node: ${currentId}`, data);
+
+      if (this.config.hooks?.afterNode) {
+        this.debug(`After hook for node: ${currentId}`, data);
+        data = await this.config.hooks.afterNode(currentId, data);
       }
 
       const edges = this.edges[currentId] || [];
@@ -71,6 +86,37 @@ export class Graph<T, N extends string> {
           this.debug(`Following conditional edge to: ${nextId}`, data);
           stack.push(nextId);
         }
+      }
+    }
+    return data;
+  }
+
+  async runAndValidate(
+    nodeFunc: (data: T) => Promise<T>,
+    currentId: N,
+    _data: T
+  ): Promise<T> {
+    let data = await nodeFunc(_data);
+
+    if (this.config.validation?.func) {
+      let retries = 0;
+      const maxRetries = this.config.validation.maxRetries ?? 0;
+      let isValid = this.config.validation.func(data);
+      while (!isValid) {
+        if (retries >= maxRetries) {
+          throw new GraphError(
+            `Validation failed for node ${currentId} after ${maxRetries} retries.`
+          );
+        }
+        this.debug(
+          `Validation failed for node ${currentId}, retrying... (${
+            retries + 1
+          }/${maxRetries})`,
+          data
+        );
+        data = await nodeFunc(data);
+        isValid = this.config.validation.func(data);
+        retries++;
       }
     }
     return data;
